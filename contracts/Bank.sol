@@ -9,11 +9,9 @@ contract Bank{
         balances[msg.sender] = msg.value;
     }
 
-    function balance() public view returns(uint){
-        return balances[msg.sender];
-    }
-
     function withdraw(uint amount) public {
+        require(balances[msg.sender] >= amount, "Your balance is insufficient.");
+
         balances[msg.sender] = balances[msg.sender] - amount;
         (bool success, ) = msg.sender.call{value:amount}("");
         require(success, "Failed to withdraw eth");
