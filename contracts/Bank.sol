@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.9;
 
+import "hardhat/console.sol";
 contract Bank{
 
     mapping (address => uint) private balances;
@@ -11,9 +12,11 @@ contract Bank{
 
     function withdraw(uint amount) public {
         require(balances[msg.sender] >= amount, "Your balance is insufficient.");
-
-        balances[msg.sender] = balances[msg.sender] - amount;
+        
+        console.log("Bank balance: %s", address(this).balance);
+        console.log("Amount to withdraw %s", amount);
         (bool success, ) = msg.sender.call{value:amount}("");
+        balances[msg.sender] = balances[msg.sender] - amount;
         require(success, "Failed to withdraw eth");
     }
 }
