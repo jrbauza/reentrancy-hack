@@ -11,12 +11,12 @@ contract Bank{
     }
 
     function withdraw(uint amount) public {
-        require(balances[msg.sender] >= amount, "Your balance is insufficient.");
+        require(amount <= balances[msg.sender], "Your balance is insufficient.");
         
         console.log("Bank balance: %s", address(this).balance);
         console.log("Amount to withdraw %s", amount);
-        (bool success, ) = msg.sender.call{value:amount}("");
         balances[msg.sender] = balances[msg.sender] - amount;
+        (bool success, ) = msg.sender.call{value:amount}("");
         require(success, "Failed to withdraw eth");
     }
 }
