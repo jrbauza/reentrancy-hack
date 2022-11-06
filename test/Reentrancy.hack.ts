@@ -46,6 +46,20 @@ describe("Reentrancy", function () {
     );
   });
 
+  it("should increase user balance", async function () {
+    const [owner, user1] = await ethers.getSigners();
+    const Bank = await ethers.getContractFactory("Bank");
+    const bank = await Bank.deploy();
+
+    const FIRST_DEPOSIT_AMOUNT = ethers.utils.parseEther("1");
+    const SECOND_DEPOSIT_AMOUNT = ethers.utils.parseEther("2");
+
+    await bank.connect(user1).deposit({value:FIRST_DEPOSIT_AMOUNT});
+    await bank.connect(user1).deposit({value:SECOND_DEPOSIT_AMOUNT});
+
+    await expect(bank.connect(user1).withdraw(FIRST_DEPOSIT_AMOUNT.add(SECOND_DEPOSIT_AMOUNT))).not.reverted;
+  });
+
   it("should not send an amount greater than the one deposited by the user", async function(){
     const [owner, user1, user2] = await ethers.getSigners();
     const Bank = await ethers.getContractFactory("Bank");
