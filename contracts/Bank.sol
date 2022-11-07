@@ -18,18 +18,10 @@ contract Bank{
 
     function withdraw(uint amount) public lockable{
         require(amount <= balances[msg.sender], "Your balance is insufficient.");
-        
-        console.log("Bank balance: %s", address(this).balance);
-        console.log("Amount to withdraw %s", amount);
-        (bool success, bytes memory data) = msg.sender.call{value:amount}("");
+
+        (bool success,) = msg.sender.call{value:amount}("");
         balances[msg.sender] = balances[msg.sender] - amount;
-        console.log("DATA: %s, SIZE: %s", string(data), data.length);
-        if (!success) {
-            console.log("Not success");
-            (string memory mes, string memory message) = abi.decode(data, (string, string));
-            console.log("D: %s, S: %s", message, mes);
-            require(success, message);
-        }
+        require(success);
     }
 
     modifier lockable {

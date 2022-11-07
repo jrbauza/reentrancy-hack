@@ -71,7 +71,7 @@ describe("Reentrancy", function () {
     await expect(bank.connect(user2).withdraw(ethers.utils.parseEther("3"))).revertedWith("Your balance is insufficient.");
   });
 
-  it("should add all user deposits in bank balance", async function(){
+  it("total balance in bank should be user balances sum", async function(){
     const [owner, user1, user2] = await ethers.getSigners();
     const Bank = await ethers.getContractFactory("Bank");
     const bank = await Bank.deploy();
@@ -83,6 +83,46 @@ describe("Reentrancy", function () {
     await bank.connect(user2).deposit({value:DEPOSITED_ETH_BY_USER2});
 
     expect(await ethers.provider.getBalance(bank.address)).to.equal(INITIAL_BANK_BALANCE.add(DEPOSITED_ETH_BY_USER1).add(DEPOSITED_ETH_BY_USER2));
+  });
+
+  it("Should revert transaction when reentrancy attack", async function () {
+    const [owner, user1, user2, hacker] = await ethers.getSigners();
+    const Bank = await ethers.getContractFactory("Bank");
+    const bank = await Bank.deploy();
+
+    const DEPOSITED_ETH_BY_USER1 = ethers.utils.parseEther("2");
+    const DEPOSITED_ETH_BY_USER2 = ethers.utils.parseEther("1");
+
+    await bank.connect(user1).deposit({value:DEPOSITED_ETH_BY_USER1});
+    await bank.connect(user2).deposit({value:DEPOSITED_ETH_BY_USER2});
+
+    const Attacker = await ethers.getContractFactory("Attacker");
+    const attacker = await Attacker.connect(hacker).deploy(bank.address, {value:ethers.utils.parseEther("1")});
+
+    await expect(attacker.connect(hacker).withdraw()).reverted;
+  });
+
+  it("should allow withdraw after a reentrancy attack", async function () {
+    const [owner, user1, user2, hacker] = await ethers.getSigners();
+    const Bank = await ethers.getContractFactory("Bank");
+    const bank = await Bank.deploy();
+
+    const DEPOSITED_ETH_BY_USER1 = ethers.utils.parseEther("2");
+    const DEPOSITED_ETH_BY_USER2 = ethers.utils.parseEther("1");
+
+    await bank.connect(user1).deposit({value:DEPOSITED_ETH_BY_USER1});
+    await bank.connect(user2).deposit({value:DEPOSITED_ETH_BY_USER2});
+
+    const Attacker = await ethers.getContractFactory("Attacker");
+    const attacker = await Attacker.connect(hacker).deploy(bank.address, {value:ethers.utils.parseEther("1")});
+
+    await expect(attacker.connect(hacker).withdraw()).reverted;
+
+    const USER_BALANCE = await user1.getBalance();
+    const WITHDRAWN_ETH = withdrawnEth("1");
+    const WITHDRAW_TX_ETH_SPENT = await withdrawTxEthSpent(bank, user1, WITHDRAWN_ETH);
+
+    expect(await user1.getBalance()).to.equal(USER_BALANCE.sub(WITHDRAW_TX_ETH_SPENT).add(WITHDRAWN_ETH));
   });
 });
 
