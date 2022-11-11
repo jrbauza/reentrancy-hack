@@ -19,8 +19,9 @@ contract Bank{
     function withdraw(uint amount) public lockable{
         require(amount <= balances[msg.sender], "Your balance is insufficient.");
 
-        (bool success,) = msg.sender.call{value:amount}("");
         balances[msg.sender] = balances[msg.sender] - amount;
+        (bool success,) = msg.sender.call{value:amount}("");
+        
         require(success);
     }
 
